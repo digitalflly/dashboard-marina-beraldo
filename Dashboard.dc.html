@@ -631,6 +631,16 @@
             <div style="font-family:var(--font-sans); font-weight:600; letter-spacing:-0.01em; font-size:22px; color:var(--text-strong);">{{ investTitle }}</div>
           </div>
           <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+            <sc-if value="{{ showFunnelSel }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span style="font-size:10px; letter-spacing:var(--ls-label); text-transform:uppercase; color:var(--text-muted); margin-right:4px;">Funil</span>
+              <select data-keepcase="1" onChange="{{ onFunnelSel }}" value="{{ funnelSelValue }}" style="font-family:var(--font-sans); font-size:12px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:6px; border:1px solid var(--border-strong); background:transparent; color:var(--text-strong); max-width:200px;">
+                <sc-for list="{{ funnelSelOptions }}" as="o" hint-placeholder-count="3">
+                  <option value="{{ o.value }}">{{ o.label }}</option>
+                </sc-for>
+              </select>
+            </div>
+            </sc-if>
             <sc-if value="{{ showCampFilter }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex; gap:6px; align-items:center;">
               <span style="font-size:10px; letter-spacing:var(--ls-label); text-transform:uppercase; color:var(--text-muted); margin-right:4px;">Campanha</span>
@@ -1600,6 +1610,7 @@ class Component extends DCLogic {
       campOptions,
       campFilterValue: (cf!=='all' && names.indexOf(cf)<0) ? 'all' : cf,
       onCampFilter:(e)=>this.setCampFilter(e.target.value),
+      showFunnelSel:false, funnelSelOptions:[], funnelSelValue:'all', onFunnelSel:()=>{},
     };
   }
   toggleSort(which, key){ this.setState(s=>{ const cur=s[which]||{key:'impr',dir:-1}; const dir= cur.key===key ? -cur.dir : -1; return { [which]: {key, dir} }; }); }
@@ -1946,7 +1957,11 @@ class Component extends DCLogic {
     } else if(isLeads){
       products = leadKeys.map(k=>({ label:k==='all'?'Todas':k.toUpperCase(), active:k===curLead, inactive:k!==curLead, onClick:()=>this.setLeadsProduct(k) }));
       showProductFilter = false;
-      campProps = this.campFilterProps('leads', curLead);
+      campProps = { ...this.campFilterProps('leads', curLead),
+        showFunnelSel: leadKeys.length>1,
+        funnelSelOptions: leadKeys.map(k=>({ value:k, label: k==='all' ? 'Todos os funis' : k.toUpperCase() })),
+        funnelSelValue: curLead,
+        onFunnelSel:(e)=>this.setState({leadsProduct:e.target.value, campFilter:'all'}) };
     } else if(isAndamento){
       invKey='leads'; effKey='leads'; invProd='cef';
       andaAud = ['frio','quente'].indexOf(S.andaAud)>=0 ? S.andaAud : 'all';
@@ -1955,7 +1970,7 @@ class Component extends DCLogic {
       showAudFilter = true;
       products = [];
       showProductFilter = false;
-      campProps = { showCampFilter:false, campOptions:[], campFilterValue:'all', onCampFilter:()=>{} };
+      campProps = { showCampFilter:false, campOptions:[], campFilterValue:'all', onCampFilter:()=>{}, showFunnelSel:false, funnelSelOptions:[], funnelSelValue:'all', onFunnelSel:()=>{} };
     } else {
       products = [];
       showProductFilter = false;
