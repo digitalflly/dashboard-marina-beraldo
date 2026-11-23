@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="/">
 <title>Marina Beraldo - Gestão de Tráfego</title>
 <script src="./support.js"></script>
 </head>
@@ -865,7 +866,7 @@ class Component extends DCLogic {
     this.charts = {};
     const _mx=this.model.maxDate, _mp=_mx.split('-'); let _py=+_mp[0], _pm2=+_mp[1]-1; if(_pm2<1){_pm2=12;_py--;} const _acFrom=_py+'-'+String(_pm2).padStart(2,'0')+'-01';
     this.state = {
-      page: 'candidaturas',
+      page: this.pageFromPath(),
       month: 'all',
       week: 'all',
       acFrom: _acFrom,
@@ -1234,7 +1235,8 @@ class Component extends DCLogic {
   delta(cur,prev){ if(prev==null||prev===0) return {text:'—', color:'var(--ink-300)', sub:''}; const v=(cur-prev)/prev*100; const up=v>=0; return { text:(up?'▲ ':'▼ ')+this.fmtPct(Math.abs(v)), color: up?'var(--success)':'var(--danger)', sub:'' }; }
 
   /* ============ HANDLERS ============ */
-  setPage(p){ this.setState({page:p}); }
+  pageFromPath(){ const slug=(window.location.pathname||'/').replace(/^\/+|\/+$/g,'').toLowerCase(); return ({campanhas:'candidaturas', conta:'conta', conteudos:'conteudos'})[slug] || 'candidaturas'; }
+  setPage(p){ const slug=({candidaturas:'campanhas', conta:'conta', conteudos:'conteudos'})[p]; if(slug && window.location.pathname!=='/'+slug){ try{ window.history.pushState({page:p}, '', '/'+slug + window.location.search); }catch(e){} } this.setState({page:p}); }
   onRefresh(){ if(this.TEMPLATE_MODE){ this.setState({refreshing:true, lastSync:this.nowStamp()}); setTimeout(()=>{ this.loadExampleData(); }, 350); return; } this.fetchLive(); this.fetchAds(); this.fetchDemographics(true); this.loadEncLeads(); }
   nowStamp(){ const now=new Date(); const MN=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']; return now.getDate()+' '+MN[now.getMonth()]+' '+now.getFullYear()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'); }
   nowYMD(){ const n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
@@ -1372,7 +1374,7 @@ class Component extends DCLogic {
   }
 
   /* ============ CHARTS ============ */
-  componentDidMount(){ this.drawCharts(); if(this.TEMPLATE_MODE){ this.loadExampleData(); return; } this.fetchLive(); this.fetchAds(); this.fetchDemographics(); this.loadEncLeads(); this.loadSignups(); this.loadImersao(); this.loadImersaoVendas(); }
+  componentDidMount(){ this._onPop=()=>this.setState({page:this.pageFromPath()}); window.addEventListener('popstate', this._onPop); this.drawCharts(); if(this.TEMPLATE_MODE){ this.loadExampleData(); return; } this.fetchLive(); this.fetchAds(); this.fetchDemographics(); this.loadEncLeads(); this.loadSignups(); this.loadImersao(); this.loadImersaoVendas(); }
 
   // KPIs do Encontrinho$ (total e ritmo ao vivo do encLeads; qualificados do snapshot de cor da planilha).
   encKpis(){
